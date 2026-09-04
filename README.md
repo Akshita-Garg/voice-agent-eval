@@ -46,8 +46,9 @@ flowchart LR
 | Lightning | 24 fixed-phrase syntheses + listening | Speed 1.0 and buffer 0 ms |
 | Final acceptance | One human end-to-end LiveKit call | Correct availability, 6/9/10-digit handling and booking; zero application errors |
 
-Read [the complete evaluation narrative](docs/evaluation-summary.md) for the
-hypotheses, controls, results, limitations, and why each setting was selected.
+Read the [submission-ready final report](docs/final-report.md) for the complete
+story, or the [detailed evaluation summary](docs/evaluation-summary.md) for the
+underlying hypotheses, controls, results, and parameter decisions.
 
 ## Setup
 
