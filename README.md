@@ -1,9 +1,11 @@
 # Voice Agent Evaluation
 
-An instrumented appointment-coordination voice agent built with Smallest AI's
-speech stack and LiveKit Agents. The project emphasizes controlled evaluation
-of turn finalization, Electron behavior, and Lightning delivery—not just a
-working demo.
+I built an appointment-coordination voice agent using Smallest AI's speech
+stack and LiveKit Agents. The agent itself is intentionally a small MVP. The
+main question I wanted to answer was: how should the system decide that a caller
+has finished speaking, without responding too slowly or cutting them off? I
+also evaluated Electron and Lightning separately before testing the selected
+settings together in a human call.
 
 ## Final MVP configuration
 
@@ -36,7 +38,12 @@ flowchart LR
     LK --> U
 ```
 
-## Evaluation headline
+## What I evaluated
+
+I evaluated the three layers separately so that each result had a clear cause,
+and then tested the selected R1/E3/L1 combination in an end-to-end human call.
+The aim was not to test every possible setting. It was to make a bounded choice
+I could explain and support with retained evidence.
 
 | Stage | Scale | Decision |
 |---|---:|---|
@@ -47,9 +54,9 @@ flowchart LR
 | Final acceptance | One human end-to-end LiveKit call | Correct availability, 6/9/10-digit handling and booking; zero application errors |
 
 Start with the [submission deck](Smallest_Voice_Agent_Report.pptx). The
-[technical report](docs/final-report.md) is the complete written submission. The
+[technical report](docs/final-report.md) contains the full explanation. The
 [evaluation method](docs/evaluation-method.md) records the controls and test
-matrix without repeating the report; detailed outputs live under
+matrix, while the detailed outputs are under
 [`results/evaluations/`](results/evaluations/).
 
 ## Setup
@@ -86,10 +93,10 @@ configuration. Stop it with `Ctrl+C`.
 
 ## Evidence and reports
 
-Every completed call writes:
+Every completed call creates:
 
-- a machine-readable event stream under `results/jsonl/`;
-- a human-readable Markdown report under `results/reports/`.
+- a machine-readable event stream under `results/jsonl/`
+- a human-readable Markdown report under `results/reports/`
 
 Reports contain the exact system configuration, transcript and committed-turn
 counts, conversation, tool inputs/outputs, errors, and mean/p50/p95 timing
@@ -97,8 +104,8 @@ metrics. Structured authentication and phone-number fields are redacted before
 writing.
 
 These per-call files are intentionally ignored by Git because they can contain
-spoken personal information. Sanitized aggregate results live under
-`results/evaluations/` and are included in the repository.
+spoken personal information. I have included the sanitized aggregate results
+under `results/evaluations/`.
 
 ## Reproduce the evaluations
 
@@ -155,7 +162,9 @@ results/jsonl/          Local raw call events; ignored by Git
 results/reports/        Local per-call readable reports; ignored by Git
 ```
 
-## Known limitations
+## What I would address next
+
+This is an MVP, and a few limits are deliberate:
 
 - The mock scheduler is in-memory and resets whenever the worker restarts.
 - A later human call exercised live barge-in successfully, but an obsolete
