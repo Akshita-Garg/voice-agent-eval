@@ -54,9 +54,8 @@ I could explain and support with retained evidence.
 | Final acceptance | One human end-to-end LiveKit call | Correct availability, 6/9/10-digit handling and booking; zero application errors |
 
 Start with the [submission deck](Smallest_Voice_Agent_Report.pptx). The
-[technical report](docs/final-report.md) contains the full explanation. The
-[evaluation method](docs/evaluation-method.md) records the controls and test
-matrix, while the detailed outputs are under
+[technical report](docs/final-report.md) contains the full explanation, while
+the detailed outputs are under
 [`results/evaluations/`](results/evaluations/).
 
 ## Setup
