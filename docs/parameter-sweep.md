@@ -162,7 +162,7 @@ production-scale load testing belong in next steps, not the MVP.
 | Selected turn configuration | Passed | R2 fixed-audio suite; no premature tool or spoken response in retained calls |
 | Electron tool and guardrail cases | Passed | E3 and every comparison configuration passed 18/18 attempts |
 | Lightning intelligibility and timing | Passed | All 24 syntheses succeeded; listener selected L1 speed 1.0 |
-| Final labelled booking | Passed | `console-ad8cd19a`, final R2/E3/L1 configuration, confirmed booking, zero application errors |
+| Final labelled booking | Passed | `console-1d4c1e3f`, final R2/E3/L1 plus phone validator, confirmed booking, zero application errors |
 
 The MVP is frozen. Deterministic 10-digit India-local phone validation was added
 after a human edge-case call and passed backend tests plus 32/32 focused Electron

@@ -163,28 +163,28 @@ enough evidence to change the working default.
 
 ## 5. Final integrated acceptance call
 
-The final human LiveKit call used the combined R2/E3/L1 settings and the 30-day
-mock calendar. It resolved “tomorrow,” returned the correct slots, waited until
-the continuation of “a little later … in the day,” and completed the selected
-booking with zero captured application errors.
+The final human LiveKit call (`console-1d4c1e3f`) used the combined R2/E3/L1
+settings, 30-day mock calendar, and deterministic phone validator. It resolved
+“tomorrow,” returned the correct slots, rejected six- and nine-digit attempts
+with the exact counts, accepted ten digits, confirmed the last four, and
+completed the selected booking with zero captured application errors.
 
 | Metric | Median | p95 |
 |---|---:|---:|
-| End-of-utterance delay | 0.936 s | 3.002 s |
-| Transcription delay | 0.913 s | 1.184 s |
-| Electron TTFT | 0.226 s | 0.740 s |
-| Lightning TTFB | 0.285 s | 1.658 s |
+| End-of-utterance delay | 0.849 s | 3.012 s |
+| Transcription delay | 0.818 s | 0.897 s |
+| Electron TTFT | 0.340 s | 0.608 s |
+| Lightning TTFB | 0.292 s | 0.427 s |
 
 This call is evidence that the chosen parts work together. It is not a
 controlled comparison with earlier human calls because the speech was not
 identical.
 
-A later human call (`console-b07d7f08`) exercised repeated barge-in: LiveKit
-stopped interrupted speech and Electron accepted date and time corrections. It
-also exposed two useful hardening targets. An in-flight availability result for
-an obsolete date still reached speech once, and free-form phone reconstruction
-produced an incorrect last-four confirmation. The latter led to the deterministic
-phone validator evaluated above.
+The final call also exposed an acoustic interruption: Pulse transcribed “Is that
+correct?”—words Aisha had just spoken—as user input, causing the confirmation to
+be marked interrupted. This points more strongly to speaker-to-microphone echo
+or browser echo cancellation than to network quality, although the application
+does not capture WebRTC packet-loss or jitter statistics for attribution.
 
 ## Final configuration
 
@@ -207,9 +207,8 @@ phone validator evaluated above.
   human calls.
 - The phone validator covers 10-digit India-local numbers, not international
   formats, and the mock backend is not a production scheduling system.
-- The final integrated booking preceded the validator addition; backend tests
-  and 32/32 phone-focused Electron attempts cover the change, while a live phone
-  smoke test remains useful before the demo.
+- The final human call showed one likely echo-induced false interruption; no
+  network or echo-cancellation comparison was run.
 - Telephony, load testing, a custom force-final adapter, and a large Cartesian
   parameter grid are follow-up work rather than MVP requirements.
 

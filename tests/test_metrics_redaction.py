@@ -43,3 +43,17 @@ def test_sink_writes_redacted_payload() -> None:
         )
 
     assert json.loads(handle.getvalue())["attributes"]["phone_number"] == "[REDACTED]"
+
+
+def test_phone_configuration_is_not_mistaken_for_a_phone_value() -> None:
+    value = {
+        "phone_number_scope": "India-local",
+        "phone_number_expected_digits": 10,
+        "normalized_phone_number": "0123456789",
+    }
+
+    redacted = redact_sensitive_data(value)
+
+    assert redacted["phone_number_scope"] == "India-local"
+    assert redacted["phone_number_expected_digits"] == 10
+    assert redacted["normalized_phone_number"] == "[REDACTED]"

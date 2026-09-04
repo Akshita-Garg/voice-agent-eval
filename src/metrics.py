@@ -8,7 +8,8 @@ from pathlib import Path
 from threading import Lock
 from typing import Any
 
-_SENSITIVE_KEY_PARTS = ("api_key", "api_secret", "authorization", "phone_number")
+_SECRET_KEY_PARTS = ("api_key", "api_secret", "authorization")
+_PHONE_VALUE_KEYS = {"phone_number", "normalized_phone_number"}
 _JSON_PHONE_PATTERN = re.compile(r'("phone_number"\s*:\s*")[^"]*(")', re.IGNORECASE)
 _PYTHON_PHONE_PATTERN = re.compile(r"('phone_number'\s*:\s*')[^']*(')", re.IGNORECASE)
 _BEARER_PATTERN = re.compile(r"(?i)(bearer\s+)[A-Za-z0-9._-]+")
@@ -21,9 +22,9 @@ def redact_sensitive_data(value: Any) -> Any:
         redacted: dict[str, Any] = {}
         for key, item in value.items():
             normalized = str(key).lower()
-            if "last_four" not in normalized and any(
-                sensitive in normalized for sensitive in _SENSITIVE_KEY_PARTS
-            ):
+            is_secret = any(sensitive in normalized for sensitive in _SECRET_KEY_PARTS)
+            is_phone_value = normalized in _PHONE_VALUE_KEYS
+            if is_secret or is_phone_value:
                 redacted[key] = "[REDACTED]"
             else:
                 redacted[key] = redact_sensitive_data(item)

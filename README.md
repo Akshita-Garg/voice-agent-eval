@@ -44,7 +44,7 @@ flowchart LR
 | Pulse WER | 18 fixed-audio transcripts, 222 reference words | 2.70% normalized WER; descriptive sanity check, not a configuration selector |
 | Electron | 72 scripted requests | Temperature 0.0 and 80 tokens; all tested settings passed 18/18 |
 | Lightning | 24 fixed-phrase syntheses + listening | Speed 1.0 and buffer 0 ms |
-| Final acceptance | One human end-to-end LiveKit call | Correct availability and booking; zero application errors |
+| Final acceptance | One human end-to-end LiveKit call | Correct availability, 6/9/10-digit handling and booking; zero application errors |
 
 Read [the complete evaluation narrative](docs/evaluation-summary.md) for the
 hypotheses, controls, results, limitations, and why each setting was selected.
@@ -160,9 +160,9 @@ results/reports/        Local per-call readable reports; ignored by Git
   the date. Production work should cancel or suppress stale tool results.
 - Phone validation is deliberately scoped to 10-digit India-local numbers; it
   does not implement international numbering plans.
-- The integrated booking call preceded the phone-validator addition. The new
-  path is covered by backend tests and 32/32 controlled Electron phone cases;
-  one short live phone smoke test remains useful before the demo.
+- One final-call interruption was most consistent with speaker-to-microphone
+  echo: Pulse captured words Aisha had just spoken as user input. The logger
+  does not capture WebRTC packet-loss or jitter statistics for attribution.
 - Two fixed-audio repetitions per turn configuration support a bounded MVP
   decision, not a population-level reliability claim.
 - Explicit Pulse force-finalization and telephone integration are documented
