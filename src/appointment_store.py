@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import asdict, dataclass
 from datetime import date, datetime, timedelta, timezone
 from threading import Lock
@@ -12,6 +13,49 @@ DAILY_SCHEDULES = (
     (("10:00", "Dr. Mehta"), ("14:30", "Dr. Mehta")),
     (("09:30", "Dr. Rao"), ("16:00", "Dr. Rao")),
 )
+PHONE_EXPECTED_DIGITS = 10
+PHONE_DIGIT_WORDS = {
+    "zero": "0",
+    "oh": "0",
+    "one": "1",
+    "two": "2",
+    "three": "3",
+    "four": "4",
+    "five": "5",
+    "six": "6",
+    "seven": "7",
+    "eight": "8",
+    "nine": "9",
+}
+
+
+def normalize_phone_number(value: str) -> str:
+    """Extract digits from numeric or individually spoken English input."""
+    tokens = re.findall(r"\d|[a-z]+", value.lower())
+    return "".join(token if token.isdigit() else PHONE_DIGIT_WORDS.get(token, "") for token in tokens)
+
+
+def validate_india_phone_number(value: str) -> dict[str, Any]:
+    """Validate the assignment's explicitly scoped 10-digit India-local number."""
+    normalized = normalize_phone_number(value)
+    received = len(normalized)
+    if received != PHONE_EXPECTED_DIGITS:
+        return {
+            "status": "invalid_phone",
+            "received_digits": received,
+            "expected_digits": PHONE_EXPECTED_DIGITS,
+            "message": (
+                f"I received {received} digits. Please provide all "
+                f"{PHONE_EXPECTED_DIGITS} digits of the phone number."
+            ),
+        }
+    return {
+        "status": "valid",
+        "received_digits": received,
+        "expected_digits": PHONE_EXPECTED_DIGITS,
+        "normalized_phone_number": normalized,
+        "phone_number_last_four": normalized[-4:],
+    }
 
 
 @dataclass(frozen=True)
@@ -66,6 +110,11 @@ class AppointmentStore:
         requested_date: str,
         requested_time: str,
     ) -> dict[str, Any]:
+        phone_validation = validate_india_phone_number(phone_number)
+        if phone_validation["status"] != "valid":
+            return phone_validation
+        normalized_phone = phone_validation["normalized_phone_number"]
+
         with self._lock:
             match = next(
                 (
@@ -88,7 +137,7 @@ class AppointmentStore:
                 "status": "confirmed",
                 "booking_id": booking_id,
                 "patient_name": patient_name,
-                "phone_number_last_four": phone_number[-4:],
+                "phone_number_last_four": normalized_phone[-4:],
                 **asdict(match),
             }
             self._bookings[booking_id] = booking

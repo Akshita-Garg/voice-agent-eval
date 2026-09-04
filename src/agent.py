@@ -22,7 +22,12 @@ from livekit.agents import (
 )
 from livekit.plugins import openai, silero, smallestai
 
-from .appointment_store import AVAILABILITY_TIMEZONE, STORE
+from .appointment_store import (
+    AVAILABILITY_TIMEZONE,
+    PHONE_EXPECTED_DIGITS,
+    STORE,
+    validate_india_phone_number,
+)
 from .config import AgentConfig
 from .metrics import JsonlMetricSink, MetricEvent
 from .report import write_markdown_report
@@ -45,12 +50,19 @@ Voice behavior:
 - Do not read JSON, internal tool names, or implementation details aloud.
 - Confirm the date and time before booking.
 - Collect the caller's name and phone number only when they choose a slot.
-- Repeat only the last four digits of the phone number.
+- This demo accepts 10-digit India-local phone numbers.
+- Whenever the caller provides a phone number, call validate_phone_number before
+  repeating digits or booking.
+- If validation fails, state the received and expected digit counts returned by
+  the tool and ask for the complete number.
+- If validation succeeds, repeat only the last four digits and ask the caller to
+  confirm them before booking.
 - If a tool is taking time, use a short natural acknowledgement.
 
 Tool rules:
 - Use check_availability whenever the caller asks which slots are open.
-- Use book_appointment only after the caller explicitly confirms a listed slot.
+- Use book_appointment only after the caller explicitly confirms a listed slot
+  and a validated phone number.
 - Never invent availability or a booking confirmation.
 """.strip()
 
@@ -95,6 +107,21 @@ class ClinicAgent(Agent):
             await asyncio.sleep(0.35)
             slots = STORE.available_slots(requested_date)
         return {"status": "ok", "slots": slots}
+
+    @function_tool
+    async def validate_phone_number(
+        self,
+        phone_number: str,
+    ) -> dict[str, Any]:
+        """Count and validate a caller's 10-digit India-local phone number.
+
+        Always call this after the caller supplies a phone number and before
+        repeating digits or booking.
+
+        Args:
+            phone_number: Caller-provided callback number, as heard by Pulse.
+        """
+        return validate_india_phone_number(phone_number)
 
     @function_tool
     async def book_appointment(
@@ -257,6 +284,8 @@ async def entrypoint(ctx: JobContext) -> None:
             "availability_horizon_days": STORE.horizon_days,
             "availability_timezone": AVAILABILITY_TIMEZONE,
             "availability_pattern": "two daily slots; Mehta/Rao schedules alternate",
+            "phone_number_scope": "India-local",
+            "phone_number_expected_digits": PHONE_EXPECTED_DIGITS,
         },
     )
     await session.start(agent=ClinicAgent(), room=ctx.room)

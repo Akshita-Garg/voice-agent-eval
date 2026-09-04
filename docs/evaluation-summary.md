@@ -2,12 +2,13 @@
 
 ## What the evaluation was trying to answer
 
-The agent working once was only the baseline. The evaluation asked three
+The agent working once was only the baseline. The evaluation asked four
 separate questions:
 
 1. **When should the system decide that the caller has finished a turn?**
-2. **Once a turn is committed, does Electron behave correctly and consistently?**
-3. **Once Electron responds, which Lightning settings produce acceptable speech?**
+2. **How accurately did Pulse transcribe the fixed test speech?**
+3. **Once a turn is committed, does Electron behave correctly and consistently?**
+4. **Once Electron responds, which Lightning settings produce acceptable speech?**
 
 Testing these layers separately prevents one component's behavior from being
 misattributed to another. A fixed-audio suite then tests the real integrated
@@ -74,19 +75,41 @@ accept it while native endpointing remains enabled, but the installed official
 LiveKit Smallest adapter does not expose a public trigger. Building a custom
 adapter was not justified after the native path met the MVP acceptance criteria.
 
+### Pulse word error rate
+
+The intended transcripts already stored in `tests/audio/manifest.json` were used
+as references. For each replay, Pulse's non-overlapping final segments were
+concatenated in event order. Case and punctuation were removed, and equivalent
+single-digit forms such as “sixth” and “6th” were normalized before scoring.
+
+| Configuration | Runs | Reference words | Errors | Normalized WER |
+|---|---:|---:|---:|---:|
+| R1 | 6 | 74 | 0 | 0.00% |
+| R2 | 6 | 74 | 2 | 2.70% |
+| R3 | 6 | 74 | 4 | 5.41% |
+| **Overall** | **18** | **222** | **6** | **2.70%** |
+
+The retained errors were “Caller” becoming “Coller” or “Collur” and one
+“appointment” becoming “in a point.” This is a descriptive sanity check on a
+tiny fixed set. It is not evidence that endpointing caused the differences: the
+same Pulse model was used throughout, while R1–R3 changed finalization behavior.
+
 ## 3. Electron parameter evaluation
 
 ### Why text-level tests
 
 STT and turn timing were removed from this stage so every Electron setting saw
-the exact same prompt, tool schemas, and conversation history. Six cases tested:
+the exact same prompt, tool schemas, and conversation history. Nine cases tested:
 
 1. absolute-date availability tool selection;
 2. relative-date resolution;
 3. refusal to book without explicit confirmation;
-4. confirmed booking with exact arguments;
-5. urgent-medical safety behavior;
-6. concise spoken response after an availability tool result.
+4. routing an incomplete number to deterministic validation;
+5. stating the exact received and required digit counts;
+6. validating a complete number before repeating or booking;
+7. confirmed booking with exact arguments after number validation;
+8. urgent-medical safety behavior;
+9. concise spoken response after an availability tool result.
 
 The harness generates its tool schemas from the same decorated Python methods
 used by the live agent. This matters: an initial calibration run omitted the
@@ -98,13 +121,15 @@ calibration comparison was replaced before retaining results.
 
 | ID | Temperature | Maximum tokens | Passes | Median client TTFT |
 |---|---:|---:|---:|---:|
-| E0 | 0.0 | 120 | 12/12 | 212.3 ms |
-| E1 | 0.2 | 120 | 12/12 | 210.5 ms |
-| E2 | 0.6 | 120 | 12/12 | 223.3 ms |
-| E3 | 0.0 | 80 | 12/12 | 215.8 ms |
+| E0 | 0.0 | 120 | 18/18 | 220.6 ms |
+| E1 | 0.2 | 120 | 18/18 | 213.4 ms |
+| E2 | 0.6 | 120 | 18/18 | 220.7 ms |
+| E3 | 0.0 | 80 | 18/18 | 214.1 ms |
 
 The narrow latency spread was treated as noise rather than a meaningful model
-ranking. No response was truncated; the largest completion used 64 tokens.
+ranking. No response was truncated; the largest completion used 64 tokens. All
+32 phone-focused attempts passed, including exact “5 received / 10 expected”
+recovery and the final validated booking call.
 
 **Decision: E3.** Tool correctness did not distinguish the settings, so the
 tie-breakers were lower randomness for an administrative workflow and a smaller
@@ -154,6 +179,13 @@ This call is evidence that the chosen parts work together. It is not a
 controlled comparison with earlier human calls because the speech was not
 identical.
 
+A later human call (`console-b07d7f08`) exercised repeated barge-in: LiveKit
+stopped interrupted speech and Electron accepted date and time corrections. It
+also exposed two useful hardening targets. An in-flight availability result for
+an obsolete date still reached speech once, and free-form phone reconstruction
+produced an incorrect last-four confirmation. The latter led to the deterministic
+phone validator evaluated above.
+
 ## Final configuration
 
 - Pulse: native endpointing, 100 ms EOU timeout, English, 16 kHz.
@@ -161,17 +193,23 @@ identical.
 - Electron: temperature 0.0, maximum 80 completion tokens.
 - Lightning: v3.1 Pro, `meher`, speed 1.0, 24 kHz, buffer 0 ms.
 - Availability: 30 future days, alternating two-slot schedules.
+- Phone handling: deterministic spoken-digit normalization and exactly 10
+  India-local digits before booking.
 
 ## What was deliberately not claimed
 
 - Two repetitions per audio fixture do not establish population failure rates.
 - Client-observed latency includes network conditions and is not provider-only
   model latency.
-- Fixed audio does not reproduce echo, background noise, or interactive barge-in.
-- The final call did not deliberately repeat live barge-in or medical safety;
-  medical routing was covered at the Electron layer.
-- The mock backend does not validate phone-number length and is not a production
-  scheduling system.
+- Fixed audio does not reproduce echo, background noise, or interactive barge-in;
+  the later human call supplies only qualitative barge-in evidence.
+- Medical routing was covered at the Electron layer, not repeated in the final
+  human calls.
+- The phone validator covers 10-digit India-local numbers, not international
+  formats, and the mock backend is not a production scheduling system.
+- The final integrated booking preceded the validator addition; backend tests
+  and 32/32 phone-focused Electron attempts cover the change, while a live phone
+  smoke test remains useful before the demo.
 - Telephony, load testing, a custom force-final adapter, and a large Cartesian
   parameter grid are follow-up work rather than MVP requirements.
 
@@ -179,6 +217,7 @@ identical.
 
 - [`parameter-sweep.md`](parameter-sweep.md): experiment matrix and stop rule.
 - [`../results/evaluations/r1-r2-r3-recorded-comparison.md`](../results/evaluations/r1-r2-r3-recorded-comparison.md): turn comparison.
+- [`../results/evaluations/pulse-wer-summary.md`](../results/evaluations/pulse-wer-summary.md): normalized Pulse WER.
 - [`../results/evaluations/electron-parameter-comparison.md`](../results/evaluations/electron-parameter-comparison.md): Electron comparison.
 - [`../results/evaluations/lightning-parameter-comparison.md`](../results/evaluations/lightning-parameter-comparison.md): Lightning comparison.
 - [`../results/evaluations/mvp-final-acceptance.md`](../results/evaluations/mvp-final-acceptance.md): integrated acceptance.

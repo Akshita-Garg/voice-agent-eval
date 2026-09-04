@@ -17,8 +17,9 @@ working demo.
 | TTS | Lightning v3.1 Pro, `meher`, speed 1.0, 24 kHz, 0 ms buffer flush |
 
 The assistant is Aisha from the fictional Stars Hollow clinic. It can check a
-30-day deterministic mock calendar and book a general consultation. It refuses
-medical advice and directs urgent symptoms to local emergency services.
+30-day deterministic mock calendar, validate a 10-digit India-local callback
+number, and book a general consultation. It refuses medical advice and directs
+urgent symptoms to local emergency services.
 
 ```mermaid
 flowchart LR
@@ -40,7 +41,8 @@ flowchart LR
 | Stage | Scale | Decision |
 |---|---:|---|
 | Turn finalization | 18 fixed-audio calls across R1–R3 | R2 reduced fragmentation versus R1 without R3's large latency penalty |
-| Electron | 48 scripted requests | Temperature 0.0 and 80 tokens; all tested settings passed 12/12 |
+| Pulse WER | 18 fixed-audio transcripts, 222 reference words | 2.70% normalized WER; descriptive sanity check, not a configuration selector |
+| Electron | 72 scripted requests | Temperature 0.0 and 80 tokens; all tested settings passed 18/18 |
 | Lightning | 24 fixed-phrase syntheses + listening | Speed 1.0 and buffer 0 ms |
 | Final acceptance | One human end-to-end LiveKit call | Correct availability and booking; zero application errors |
 
@@ -119,6 +121,12 @@ uv run python scripts/replay_livekit_audio.py `
   --run-label recorded-r1
 ```
 
+Derive normalized Pulse WER from the retained fixed-audio logs:
+
+```powershell
+uv run python -m scripts.evaluate_pulse_wer
+```
+
 The original human recordings are excluded from Git for privacy. See
 [`tests/audio/README.md`](tests/audio/README.md) to create replacement fixtures.
 
@@ -147,9 +155,14 @@ results/reports/        Local per-call readable reports; ignored by Git
 ## Known limitations
 
 - The mock scheduler is in-memory and resets whenever the worker restarts.
-- The final acceptance call did not deliberately repeat live barge-in or medical
-  safety; medical routing was covered in the controlled Electron suite.
-- Phone-number length is not yet validated by the mock booking backend.
+- A later human call exercised live barge-in successfully, but an obsolete
+  availability request could still finish speaking after the caller corrected
+  the date. Production work should cancel or suppress stale tool results.
+- Phone validation is deliberately scoped to 10-digit India-local numbers; it
+  does not implement international numbering plans.
+- The integrated booking call preceded the phone-validator addition. The new
+  path is covered by backend tests and 32/32 controlled Electron phone cases;
+  one short live phone smoke test remains useful before the demo.
 - Two fixed-audio repetitions per turn configuration support a bounded MVP
   decision, not a population-level reliability claim.
 - Explicit Pulse force-finalization and telephone integration are documented

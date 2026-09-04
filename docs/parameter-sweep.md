@@ -18,7 +18,7 @@ family, select a winner, and hold it fixed for the next family.
 | Pulse formatting | Enabled | Keep transcript presentation constant |
 | Silero VAD | Plugin defaults: 50 ms minimum speech, 550 ms minimum silence, 0.5 activation threshold | Avoid confounding VAD and turn-finalization changes |
 | LiveKit turn detector | `turn-detector-v1` | Required semantic protection for thinking pauses |
-| Electron | Temperature 0.0, maximum 80 tokens | Selected after 48 controlled text-level attempts |
+| Electron | Temperature 0.0, maximum 80 tokens | Selected after 72 controlled text-level attempts |
 | Lightning | v3.1 Pro, `meher`, speed 1.0, 24 kHz, buffer 0 ms | Selected after automated timing and human listening |
 | Prompt, tools, availability data | Byte-identical | Prevent scenario or business-logic drift |
 
@@ -69,12 +69,13 @@ correctness outranks small TTFT differences.
 
 ### Stage 2 result
 
-Each configuration received the same six cases twice. E0, E1, E2 and E3 all
-passed 12/12 attempts: exact availability and booking tools, absolute and
-relative dates, the confirmation gate, urgent-medical routing and concise
-post-tool speech. Median client-observed TTFT ranged from 210.5 to 223.3 ms,
-which is too narrow and noisy to distinguish these settings. No response hit a
-length stop; the largest completion used 64 tokens.
+Each configuration received the same nine cases twice. E0, E1, E2 and E3 all
+passed 18/18 attempts: exact availability and booking tools, absolute and
+relative dates, the confirmation gate, incomplete and complete phone handling,
+urgent-medical routing and concise post-tool speech. Median client-observed TTFT
+ranged from 213.4 to 220.7 ms, which is too narrow and noisy to distinguish
+these settings. No response hit a length stop; the largest completion used 64
+tokens.
 
 Select **E3: temperature 0.0, maximum 80 tokens**. The lower temperature is the
 appropriate tie-breaker for a constrained administrative workflow, and the
@@ -159,10 +160,12 @@ production-scale load testing belong in next steps, not the MVP.
 | Stop condition | Status | Evidence |
 |---|---|---|
 | Selected turn configuration | Passed | R2 fixed-audio suite; no premature tool or spoken response in retained calls |
-| Electron tool and guardrail cases | Passed | E3 and every comparison configuration passed 12/12 attempts |
+| Electron tool and guardrail cases | Passed | E3 and every comparison configuration passed 18/18 attempts |
 | Lightning intelligibility and timing | Passed | All 24 syntheses succeeded; listener selected L1 speed 1.0 |
 | Final labelled booking | Passed | `console-ad8cd19a`, final R2/E3/L1 configuration, confirmed booking, zero application errors |
 
-The MVP is frozen. Retain live barge-in coverage, phone-number validation,
-explicit Pulse force-finalization and telephony as clearly labelled follow-up
-work rather than extending the parameter sweep.
+The MVP is frozen. Deterministic 10-digit India-local phone validation was added
+after a human edge-case call and passed backend tests plus 32/32 focused Electron
+attempts. Retain stale-tool cancellation, broader phone formats, explicit Pulse
+force-finalization and telephony as clearly labelled follow-up work rather than
+extending the parameter sweep.

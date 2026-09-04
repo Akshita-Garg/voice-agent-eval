@@ -4,7 +4,11 @@ from src.config import AgentConfig
 
 def test_agent_exposes_required_tools() -> None:
     tool_names = {tool.info.name for tool in ClinicAgent().tools}
-    assert tool_names == {"check_availability", "book_appointment"}
+    assert tool_names == {
+        "check_availability",
+        "validate_phone_number",
+        "book_appointment",
+    }
 
 
 def test_smallest_stack_session_constructs_without_network_calls() -> None:

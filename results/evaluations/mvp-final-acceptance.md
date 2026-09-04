@@ -53,6 +53,20 @@ not a provider-level latency benchmark.
   messages. The agent behaved correctly despite this internal fragmentation;
   the configuration reduces fragmentation but does not eliminate it.
 
+## Post-acceptance hardening
+
+A later human call (`console-b07d7f08`) successfully exercised repeated barge-in
+and surfaced unreliable free-form phone reconstruction. The agent now calls a
+deterministic validator that normalizes individually spoken English digits,
+reports the exact received-versus-required count, and prevents an invalid number
+from consuming a slot. The updated three-tool Electron contract passed 72/72
+controlled attempts, including 32/32 phone-focused attempts, and the backend
+path is unit-tested. The scope is explicitly 10-digit India-local numbers.
+
+That later call also showed that interrupting speech does not automatically
+cancel an already-running tool result; one obsolete availability response still
+reached speech. Stale-tool cancellation remains a production follow-up.
+
 ## Evidence files
 
 - Machine event stream: `results/jsonl/session-console-ad8cd19a.jsonl`

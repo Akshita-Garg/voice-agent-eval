@@ -15,7 +15,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from livekit.agents.llm.utils import build_legacy_openai_schema
-from openai import OpenAI
+from openai import OpenAI, RateLimitError
 
 from src.agent import ClinicAgent, build_agent_instructions
 
@@ -105,22 +105,124 @@ def build_scenarios(today: date) -> list[Scenario]:
                 },
             ],
             expected={
-                "no_tool": True,
-                "text_any": ["confirm", "would you like", "shall i"],
+                "forbidden_tools": ["book_appointment"],
             },
         ),
         Scenario(
-            id="confirmed_booking",
-            purpose="Book only after explicit confirmation and preserve every argument.",
+            id="incomplete_phone",
+            purpose="Send an incomplete phone number to deterministic validation.",
+            messages=[
+                {"role": "assistant", "content": "What is your phone number?"},
+                {
+                    "role": "user",
+                    "content": "01234",
+                },
+            ],
+            expected={
+                "tool": "validate_phone_number",
+                "arguments": {"phone_number": "01234"},
+            },
+        ),
+        Scenario(
+            id="incomplete_phone_tool_result",
+            purpose="State the exact received and expected counts after validation.",
+            messages=[
+                {"role": "assistant", "content": "What is your phone number?"},
+                {"role": "user", "content": "01234"},
+                {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_eval_incomplete_phone",
+                            "type": "function",
+                            "function": {
+                                "name": "validate_phone_number",
+                                "arguments": json.dumps({"phone_number": "01234"}),
+                            },
+                        }
+                    ],
+                },
+                {
+                    "role": "tool",
+                    "tool_call_id": "call_eval_incomplete_phone",
+                    "content": json.dumps(
+                        {
+                            "status": "invalid_phone",
+                            "received_digits": 5,
+                            "expected_digits": 10,
+                            "message": (
+                                "I received 5 digits. Please provide all 10 digits "
+                                "of the phone number."
+                            ),
+                        }
+                    ),
+                },
+            ],
+            expected={
+                "no_tool": True,
+                "text_all": ["5", "10"],
+            },
+        ),
+        Scenario(
+            id="complete_phone",
+            purpose="Validate a complete number before repeating or booking.",
+            messages=[
+                {"role": "assistant", "content": "What is your phone number?"},
+                {"role": "user", "content": f"My phone number is {TEST_PHONE}."},
+            ],
+            expected={
+                "tool": "validate_phone_number",
+                "arguments": {"phone_number": TEST_PHONE},
+            },
+        ),
+        Scenario(
+            id="validated_booking",
+            purpose="Book only after slot, number, and final confirmation are established.",
             messages=[
                 {"role": "assistant", "content": f"{slots_text} Which one works for you?"},
                 {
                     "role": "user",
-                    "content": (
-                        f"Please book the 9:30 AM slot on {display_date}. "
-                        f"My name is Test Caller and my phone number is {TEST_PHONE}."
+                    "content": f"The 9:30 AM slot on {display_date} works for me.",
+                },
+                {"role": "assistant", "content": "Is that date and time correct?"},
+                {"role": "user", "content": "Yes."},
+                {"role": "assistant", "content": "What is your full name?"},
+                {"role": "user", "content": "Test Caller."},
+                {"role": "assistant", "content": "What is your phone number?"},
+                {"role": "user", "content": TEST_PHONE},
+                {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_eval_validate_phone",
+                            "type": "function",
+                            "function": {
+                                "name": "validate_phone_number",
+                                "arguments": json.dumps({"phone_number": TEST_PHONE}),
+                            },
+                        }
+                    ],
+                },
+                {
+                    "role": "tool",
+                    "tool_call_id": "call_eval_validate_phone",
+                    "content": json.dumps(
+                        {
+                            "status": "valid",
+                            "received_digits": 10,
+                            "expected_digits": 10,
+                            "normalized_phone_number": TEST_PHONE,
+                            "phone_number_last_four": "1234",
+                        }
                     ),
                 },
+                {
+                    "role": "assistant",
+                    "content": "Your number ends in 1234. Is that correct?",
+                },
+                {"role": "user", "content": "Yes, please book it."},
             ],
             expected={
                 "tool": "book_appointment",
@@ -282,6 +384,9 @@ def score_result(scenario: Scenario, result: ModelResult) -> tuple[bool, list[st
     reasons: list[str] = []
     if expected.get("no_tool") and result.tool_calls:
         reasons.append(f"unexpected tool call: {result.tool_calls[0]['name']}")
+    for forbidden_tool in expected.get("forbidden_tools", []):
+        if any(call["name"] == forbidden_tool for call in result.tool_calls):
+            reasons.append(f"forbidden tool call: {forbidden_tool}")
     if "tool" in expected:
         if len(result.tool_calls) != 1:
             reasons.append(f"expected one {expected['tool']} call; received {len(result.tool_calls)}")
@@ -378,7 +483,7 @@ def write_report(
         "",
         f"- Evaluation date context: `{evaluation_date.isoformat()}` in Asia/Kolkata",
         f"- Model: `{MODEL}`",
-        "- Two repetitions of six fixed text-level cases per configuration",
+        f"- Two repetitions of {len(scenarios)} fixed text-level cases per configuration",
         "- LiveKit, Pulse, Silero and Lightning excluded so this stage isolates Electron",
         "- Tool schemas are generated from the same decorated methods used by the live agent",
         "- Selection order: guardrail/tool pass count, then lower temperature; token reduction retained only if it does not add failures",
@@ -438,9 +543,9 @@ def write_report(
             "",
             f"Selected: **{selected.id} — temperature {selected.temperature}, maximum {selected.max_tokens} tokens**.",
             "",
-            "All four configurations passed 12/12 attempts. Their median client-observed TTFTs fell within a narrow 210.5–223.3 ms range, and the largest completion used 64 tokens. E3 wins on task fit: lower randomness for an administrative workflow and a smaller ceiling with no observed truncation.",
+            "The selected configuration is determined first by guardrail and tool correctness, then by task-fit tie-breakers. Exact pass counts and latency observations are reported in the table above.",
             "",
-            "This is the best configuration in this bounded scripted suite, not a universal model optimum. A final live voice call remains necessary to verify that the text-level choice behaves correctly in the complete pipeline.",
+            "This is the best configuration in this bounded scripted suite, not a universal model optimum. Because phone validation was added after the integrated acceptance booking, one short live phone smoke test remains useful before the demo.",
             "",
             "## Evidence limits",
             "",
@@ -457,6 +562,13 @@ def write_report(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repetitions", type=int, default=2)
+    parser.add_argument(
+        "--request-delay-seconds",
+        type=float,
+        default=1.0,
+        help="Pacing between API requests to stay within account rate limits.",
+    )
+    parser.add_argument("--rate-limit-retries", type=int, default=4)
     parser.add_argument(
         "--output-dir",
         type=Path,
@@ -497,12 +609,21 @@ def main() -> int:
         for repetition in range(1, args.repetitions + 1):
             for scenario in scenarios:
                 try:
-                    result = call_electron(
-                        client,
-                        system_prompt=system_prompt,
-                        scenario=scenario,
-                        config=config,
-                    )
+                    for attempt in range(args.rate_limit_retries + 1):
+                        try:
+                            result = call_electron(
+                                client,
+                                system_prompt=system_prompt,
+                                scenario=scenario,
+                                config=config,
+                            )
+                            break
+                        except RateLimitError:
+                            if attempt == args.rate_limit_retries:
+                                raise
+                            wait_seconds = min(5 * (2**attempt), 20)
+                            print(f"    rate limited; retrying in {wait_seconds}s")
+                            time.sleep(wait_seconds)
                     passed, reasons = score_result(scenario, result)
                     record = {
                         "config_id": config.id,
@@ -536,6 +657,7 @@ def main() -> int:
                 records.append(record)
                 status = "PASS" if record["passed"] else "FAIL"
                 print(f"  {scenario.id} rep {repetition}: {status}")
+                time.sleep(args.request_delay_seconds)
 
     for config in initial_configs:
         run_config(config)
@@ -561,6 +683,8 @@ def main() -> int:
             "model": MODEL,
             "repetitions": args.repetitions,
             "scenario_count": len(scenarios),
+            "request_delay_seconds": args.request_delay_seconds,
+            "rate_limit_retries": args.rate_limit_retries,
             "system_prompt": system_prompt,
             "tools": TOOLS,
         }
