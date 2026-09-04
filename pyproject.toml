@@ -1,0 +1,26 @@
+[project]
+name = "voice-agent-eval"
+version = "0.1.0"
+description = "Instrumented clinic appointment voice agent built on Smallest AI and LiveKit"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "livekit-agents[openai,smallestai,silero]",
+  "python-dotenv",
+]
+
+[dependency-groups]
+dev = [
+  "pytest",
+  "pytest-asyncio",
+  "ruff",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-p no:cacheprovider"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = [".test-tmp"]

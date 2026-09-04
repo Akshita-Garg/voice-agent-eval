@@ -1,0 +1,24 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+pytest-cache-files-*/
+.ruff_cache/
+.test-tmp/
+*.pyc
+results/jsonl/*.jsonl
+results/reports/*.md
+results/*.csv
+
+# Private human voice fixtures. Keep the manifest and recreation instructions.
+tests/audio/*.m4a
+tests/audio/processed/*.wav
+
+# Local editor, OS, and coverage output.
+.coverage
+htmlcov/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log

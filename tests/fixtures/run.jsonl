@@ -1,0 +1,5 @@
+{"event":"configuration","attributes":{"stt_eou_timeout_ms":300}}
+{"event":"metrics_collected","attributes":{"metrics":{"type":"llm_metrics","ttft":0.2,"duration":0.8,"tokens_per_second":30.0}}}
+{"event":"metrics_collected","attributes":{"metrics":{"type":"tts_metrics","ttfb":0.15,"duration":0.5,"audio_duration":1.2}}}
+{"event":"user_input_transcribed","attributes":{"is_final":true}}
+{"event":"function_tools_executed","attributes":{}}

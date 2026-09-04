@@ -1,0 +1,31 @@
+{
+  "format": {
+    "sample_rate_hz": 16000,
+    "channels": 1,
+    "encoding": "pcm_s16le"
+  },
+  "silence_detection": {
+    "threshold_db": -35,
+    "minimum_duration_seconds": 0.3
+  },
+  "fixtures": [
+    {
+      "file": "processed/clean-request.wav",
+      "expected_transcript": "I want to book an appointment for September sixth.",
+      "duration_seconds": 5.802688,
+      "internal_silences_seconds": []
+    },
+    {
+      "file": "processed/hesitation-request.wav",
+      "expected_transcript": "I want to book an appointment for September sixth.",
+      "duration_seconds": 7.808,
+      "internal_silences_seconds": [1.204125]
+    },
+    {
+      "file": "processed/details-request.wav",
+      "expected_transcript": "My name is Test Caller and my number is zero one two three four five six seven eight nine.",
+      "duration_seconds": 13.162688,
+      "internal_silences_seconds": [0.713063, 1.518625]
+    }
+  ]
+}
