@@ -18,6 +18,7 @@ tests/audio/processed/*.wav
 docs/drafts/*.pptx
 
 # Local editor, OS, and coverage output.
+~$*.pptx
 .coverage
 htmlcov/
 .vscode/

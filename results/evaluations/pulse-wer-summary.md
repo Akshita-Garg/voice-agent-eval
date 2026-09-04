@@ -13,9 +13,9 @@
 
 | Config | Runs | Ref. words | Substitutions | Deletions | Insertions | WER |
 |---|---:|---:|---:|---:|---:|---:|
-| R1 | 6 | 74 | 0 | 0 | 0 | 0.00% |
-| R2 | 6 | 74 | 2 | 0 | 0 | 2.70% |
-| R3 | 6 | 74 | 3 | 0 | 1 | 5.41% |
+| R0 | 6 | 74 | 0 | 0 | 0 | 0.00% |
+| R1 | 6 | 74 | 2 | 0 | 0 | 2.70% |
+| R2 | 6 | 74 | 3 | 0 | 1 | 5.41% |
 | **Overall** | **18** | **222** | **5** | **0** | **1** | **2.70%** |
 
 ## Result by fixture
@@ -28,16 +28,16 @@
 
 ## Runs containing errors
 
-- **R2 / `details-request` / repetition 1 — 5.26%:**
+- **R1 / `details-request` / repetition 1 — 5.26%:**
   reference: “My name is Test Caller and my number is zero one two three four five six seven eight nine.”
   Pulse: “My name is Test Coller and my number is zero one two three four five six seven eight nine”
-- **R2 / `details-request` / repetition 2 — 5.26%:**
+- **R1 / `details-request` / repetition 2 — 5.26%:**
   reference: “My name is Test Caller and my number is zero one two three four five six seven eight nine.”
   Pulse: “My name is Test Collur and my number is zero one two three four five six seven eight nine”
-- **R3 / `clean-request` / repetition 2 — 33.33%:**
+- **R2 / `clean-request` / repetition 2 — 33.33%:**
   reference: “I want to book an appointment for September sixth.”
   Pulse: “I want to book in a point for September sixth”
-- **R3 / `details-request` / repetition 1 — 5.26%:**
+- **R2 / `details-request` / repetition 1 — 5.26%:**
   reference: “My name is Test Caller and my number is zero one two three four five six seven eight nine.”
   Pulse: “My name is Test Coller and my number is zero one two three four five six seven eight nine”
 
@@ -48,7 +48,7 @@ name variation (`Caller` → `Coller`/`Collur`) and one `appointment` →
 `in a point` recognition.
 
 This table is an STT sanity check, not evidence that an endpointing setting
-caused better or worse lexical accuracy. R1–R3 changed finalization behavior,
+caused better or worse lexical accuracy. R0–R2 changed finalization behavior,
 the sample has only two repetitions per fixture/configuration, and the same
 Pulse model was used throughout. Endpointing selection therefore remains based
 on turn fragmentation and latency.

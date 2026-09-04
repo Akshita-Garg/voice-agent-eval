@@ -156,16 +156,16 @@ LiveKit committed turns were counted separately.
 
 | Config | Pulse endpointing / EOU | LiveKit min/max | Pulse finals | User turns | Clean mean EOU |
 |---|---|---:|---:|---:|---:|
-| R1 | Native / 100 ms | 0.40 / 1.50 s | 15 | 11 | 0.823 s |
-| R2 | Native / 100 ms | 0.40 / 3.00 s | 15 | 9 | 0.844 s |
-| R3 | Timeout-only / 800 ms | 0.40 / 3.00 s | 12 | 8 | 2.660 s |
+| R0 | Native / 100 ms | 0.40 / 1.50 s | 15 | 11 | 0.823 s |
+| R1 | Native / 100 ms | 0.40 / 3.00 s | 15 | 9 | 0.844 s |
+| R2 | Timeout-only / 800 ms | 0.40 / 3.00 s | 12 | 8 | 2.660 s |
 
-R1's shorter maximum produced the most internal fragmentation. R2 reduced
+R0's shorter maximum produced the most internal fragmentation. R1 reduced
 committed turns from 11 to 9 while keeping clean-request latency approximately
-unchanged in this sample. R3 grouped the 1.204-second hesitation consistently,
-but its clearly complete requests took roughly 3.2 times R2's mean EOU delay.
+unchanged in this sample. R2 grouped the 1.204-second hesitation consistently,
+but its clearly complete requests took roughly 3.2 times R1's mean EOU delay.
 
-**Decision: R2.** It produced the best tested balance between responsiveness and
+**Decision: R1.** It produced the best tested balance between responsiveness and
 protection for incomplete thoughts. It reduced fragmentation; it did not
 eliminate it.
 
@@ -183,9 +183,9 @@ punctuation differences, and normalized equivalent single-digit forms such as
 
 | Configuration | Runs | Reference words | Errors | Normalized WER |
 |---|---:|---:|---:|---:|
-| R1 | 6 | 74 | 0 | 0.00% |
-| R2 | 6 | 74 | 2 | 2.70% |
-| R3 | 6 | 74 | 4 | 5.41% |
+| R0 | 6 | 74 | 0 | 0.00% |
+| R1 | 6 | 74 | 2 | 2.70% |
+| R2 | 6 | 74 | 4 | 5.41% |
 | **Overall** | **18** | **222** | **6** | **2.70%** |
 
 The observed errors were `Caller` becoming `Coller` or `Collur`, and one
@@ -250,7 +250,7 @@ time-based buffer flush.
 
 ## 5. Final integrated acceptance
 
-The final human LiveKit call used R2/E3/L1 plus deterministic phone validation.
+The final human LiveKit call used R1/E3/L1 plus deterministic phone validation.
 
 | Check | Result |
 |---|---|
@@ -307,12 +307,12 @@ from Git; the manifest and recreation instructions remain available.
 
 Key evidence:
 
-- [Turn-finalization comparison](../results/evaluations/r1-r2-r3-recorded-comparison.md)
+- [Turn-finalization comparison](../results/evaluations/r0-r1-r2-recorded-comparison.md)
 - [Pulse WER report](../results/evaluations/pulse-wer-summary.md)
 - [Electron parameter comparison](../results/evaluations/electron-parameter-comparison.md)
 - [Lightning parameter comparison](../results/evaluations/lightning-parameter-comparison.md)
 - [Final call acceptance](../results/evaluations/mvp-final-acceptance.md)
-- [Parameter sweep and stop rule](parameter-sweep.md)
+- [Evaluation method, controls, and test matrix](evaluation-method.md)
 
 The final local verification completed 26 automated tests and the repository's
 code-quality checks successfully.
@@ -333,7 +333,7 @@ shows how the Smallest AI components behave inside a real-time orchestrated
 pipeline, where transcript finalization, semantic turn completion, interruption
 handling, tool correctness, and speech delivery must be evaluated separately.
 
-Within the MVP's limits, R2/E3/L1 is the strongest tested configuration: it
+Within the MVP's limits, R1/E3/L1 is the strongest tested configuration: it
 preserves prompt response on clean turns, reduces fragmentation relative to the
 shorter LiveKit maximum, avoids timeout-only latency, produces deterministic
 administrative behavior, and retains the most natural tested speech setting.

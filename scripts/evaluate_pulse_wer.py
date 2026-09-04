@@ -31,7 +31,7 @@ def pulse_hypothesis(path: Path) -> str:
 
 
 def identify_run(path: Path, fixtures: dict[str, str]) -> tuple[str, str] | None:
-    config_match = re.search(r"recorded-r([123])(?:-|_)", path.name)
+    config_match = re.search(r"recorded-r([012])(?:-|_)", path.name)
     if not config_match:
         return None
     fixture_id = next((name for name in fixtures if name in path.name), None)
@@ -144,7 +144,7 @@ def write_report(path: Path, records: list[dict[str, Any]]) -> None:
             "`in a point` recognition.",
             "",
             "This table is an STT sanity check, not evidence that an endpointing setting",
-            "caused better or worse lexical accuracy. R1–R3 changed finalization behavior,",
+            "caused better or worse lexical accuracy. R0–R2 changed finalization behavior,",
             "the sample has only two repetitions per fixture/configuration, and the same",
             "Pulse model was used throughout. Endpointing selection therefore remains based",
             "on turn fragmentation and latency.",
@@ -201,7 +201,7 @@ def main() -> int:
             )
 
     if len(records) != 18:
-        raise RuntimeError(f"Expected 18 retained R1–R3 runs; found {len(records)}")
+        raise RuntimeError(f"Expected 18 retained R0–R2 runs; found {len(records)}")
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     raw_path = args.output_dir / "pulse-wer-runs.jsonl"

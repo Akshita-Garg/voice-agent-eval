@@ -3,7 +3,7 @@
 ## Decision
 
 **MVP accepted.** This call completed an appointment booking with the final
-R2/E3/L1 configuration and the deterministic phone validator. It generated a
+R1/E3/L1 configuration and the deterministic phone validator. It generated a
 complete JSONL event stream and readable report with no application errors.
 
 ## Exact submitted configuration

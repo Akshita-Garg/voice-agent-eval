@@ -40,16 +40,17 @@ flowchart LR
 
 | Stage | Scale | Decision |
 |---|---:|---|
-| Turn finalization | 18 fixed-audio calls across R1–R3 | R2 reduced fragmentation versus R1 without R3's large latency penalty |
+| Turn finalization | 18 fixed-audio calls across R0–R2 | R1 reduced fragmentation versus R0 without R2's large latency penalty |
 | Pulse WER | 18 fixed-audio transcripts, 222 reference words | 2.70% normalized WER; descriptive sanity check, not a configuration selector |
 | Electron | 72 scripted requests | Temperature 0.0 and 80 tokens; all tested settings passed 18/18 |
 | Lightning | 24 fixed-phrase syntheses + listening | Speed 1.0 and buffer 0 ms |
 | Final acceptance | One human end-to-end LiveKit call | Correct availability, 6/9/10-digit handling and booking; zero application errors |
 
 Start with the [submission deck](Smallest_Voice_Agent_Report.pptx). The
-[technical report](docs/final-report.md) provides the complete written record,
-while the [detailed evaluation summary](docs/evaluation-summary.md) contains the
-underlying hypotheses, controls, results, and parameter decisions.
+[technical report](docs/final-report.md) is the complete written submission. The
+[evaluation method](docs/evaluation-method.md) records the controls and test
+matrix without repeating the report; detailed outputs live under
+[`results/evaluations/`](results/evaluations/).
 
 ## Setup
 
@@ -120,7 +121,7 @@ uv run python scripts/replay_livekit_audio.py `
   tests/audio/processed/clean-request.wav `
   tests/audio/processed/hesitation-request.wav `
   tests/audio/processed/details-request.wav `
-  --run-label recorded-r1
+  --run-label recorded-r0
 ```
 
 Derive normalized Pulse WER from the retained fixed-audio logs:
@@ -148,7 +149,7 @@ are absent.
 src/                    Live agent, configuration, tools, logging, reports
 scripts/                Electron, Lightning, and fixed-audio evaluation runners
 tests/                  Unit tests plus the private-audio fixture manifest
-docs/                   Evaluation plan, scripts, parameter sweep, final summary
+docs/                   Final report, consolidated evaluation method, call script
 results/evaluations/    Sanitized aggregate evidence and listening montages
 results/jsonl/          Local raw call events; ignored by Git
 results/reports/        Local per-call readable reports; ignored by Git
