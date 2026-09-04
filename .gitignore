@@ -14,6 +14,9 @@ results/*.csv
 tests/audio/*.m4a
 tests/audio/processed/*.wav
 
+# Preserve local presentation drafts without publishing them.
+docs/drafts/*.pptx
+
 # Local editor, OS, and coverage output.
 .coverage
 htmlcov/
